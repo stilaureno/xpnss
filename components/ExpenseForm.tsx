@@ -3,11 +3,14 @@
 import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 
-export default function ExpenseForm({ categories, onSuccess, defaultDate }: { categories: any[], onSuccess: () => void, defaultDate?: string }) {
-  const [title, setTitle] = useState('');
-  const [amount, setAmount] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [date, setDate] = useState(defaultDate || new Date().toISOString().split('T')[0]);
+export default function ExpenseForm({ categories, onSuccess, defaultDate, editExpense }: { categories: any[], onSuccess: () => void, defaultDate?: string, editExpense?: any }) {
+  const [title, setTitle] = useState(editExpense?.title || '');
+  const [amount, setAmount] = useState(editExpense?.amount?.toString() || '');
+  const [categoryId, setCategoryId] = useState(editExpense?.category_id || '');
+  const [date, setDate] = useState(editExpense?.date?.split('T')[0] || defaultDate || (() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  })());
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -17,31 +20,39 @@ export default function ExpenseForm({ categories, onSuccess, defaultDate }: { ca
     setLoading(true);
     const supabase = createClient();
     
-    const insertData: any = {
-      id: crypto.randomUUID(),
-      title: title.trim(),
-      amount: parseFloat(amount),
-      date: new Date().toISOString(),
-      state: 'active',
-      created_by: '13efc018-1040-4382-8729-1109b30da23b',
-    };
-    if (categoryId) {
-      insertData.category_id = categoryId;
-    }
-    
-    console.log('Inserting:', insertData);
-    
-    const { error, data } = await supabase.from('expenses').insert(insertData).select();
-    
-    console.log('Result:', { error, data });
-    
-    setLoading(false);
-    if (error) {
-      console.error('Insert error details:', JSON.stringify(error));
-      alert('Error: ' + (error.message || JSON.stringify(error)));
-      return;
-    }
-    if (!error) {
+    if (editExpense) {
+      const { error } = await supabase.from('expenses').update({
+        title: title.trim(),
+        amount: parseFloat(amount),
+        category_id: categoryId || null,
+      }).eq('id', editExpense.id);
+      
+      setLoading(false);
+      if (error) {
+        alert('Error: ' + error.message);
+        return;
+      }
+      onSuccess();
+    } else {
+      const insertData: any = {
+        id: crypto.randomUUID(),
+        title: title.trim(),
+        amount: parseFloat(amount),
+        date: date + 'T00:00:00',
+        state: 'active',
+        created_by: '13efc018-1040-4382-8729-1109b30da23b',
+      };
+      if (categoryId) {
+        insertData.category_id = categoryId;
+      }
+      
+      const { error, data } = await supabase.from('expenses').insert(insertData).select();
+      
+      setLoading(false);
+      if (error) {
+        alert('Error: ' + (error.message || JSON.stringify(error)));
+        return;
+      }
       setTitle('');
       setAmount('');
       setCategoryId('');
@@ -89,7 +100,7 @@ export default function ExpenseForm({ categories, onSuccess, defaultDate }: { ca
         disabled={loading}
         className="w-full bg-blue-500 text-white p-3 rounded-lg font-medium text-sm disabled:opacity-50"
       >
-        {loading ? 'Adding...' : 'Add Expense'}
+        {loading ? (editExpense ? 'Updating...' : 'Adding...') : (editExpense ? 'Update Expense' : 'Add Expense')}
       </button>
     </form>
   );

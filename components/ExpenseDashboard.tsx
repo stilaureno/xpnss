@@ -8,11 +8,13 @@ export default function ExpenseDashboard() {
   const [expenses, setExpenses] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  });
   const [showFabMenu, setShowFabMenu] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<any>(null);
   const [showExpenseMenu, setShowExpenseMenu] = useState(false);
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const touchStartX = useRef(0);
   const supabase = createClient();
 
@@ -49,18 +51,9 @@ export default function ExpenseDashboard() {
     }
   };
 
-  const handleExpenseTouchStart = (e: React.TouchEvent, expense: any) => {
-    longPressTimer.current = setTimeout(() => {
-      setSelectedExpense(expense);
-      setShowExpenseMenu(true);
-    }, 500);
-  };
-
-  const handleExpenseTouchEnd = () => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
+  const handleExpenseClick = (expense: any) => {
+    setSelectedExpense(expense);
+    setShowExpenseMenu(true);
   };
 
   const handleDeleteExpense = async () => {
@@ -71,30 +64,46 @@ export default function ExpenseDashboard() {
     fetchData();
   };
 
-  const dayExpenses = expenses.filter(e => e.date?.startsWith(selectedDate));
+  const dayExpenses = expenses.filter(e => {
+    if (!e.date) return false;
+    const d = new Date(e.date);
+    const expenseDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    return expenseDate === selectedDate;
+  });
   const dayTotal = dayExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
-  const thisMonth = new Date().toISOString().slice(0, 7);
+  const thisMonth = (() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  })();
   const monthlyTotal = expenses
-    .filter(e => e.date?.startsWith(thisMonth))
+    .filter(e => {
+      if (!e.date) return false;
+      const d = new Date(e.date);
+      const expenseMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      return expenseMonth === thisMonth;
+    })
     .reduce((sum, e) => sum + Number(e.amount), 0);
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr + 'T00:00:00');
-    const today = new Date().toISOString().split('T')[0];
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    const now = new Date();
+    const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const yesterdayDate = new Date(now);
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterday = `${yesterdayDate.getFullYear()}-${String(yesterdayDate.getMonth() + 1).padStart(2, '0')}-${String(yesterdayDate.getDate()).padStart(2, '0')}`;
     if (dateStr === today) return 'Today';
     if (dateStr === yesterday) return 'Yesterday';
+    const date = new Date(dateStr + 'T00:00:00');
     return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
   };
 
   if (loading) return <div className="p-8 text-center text-gray-500">Loading...</div>;
 
   return (
-    <div 
-      className="min-h-screen bg-gray-50 pb-20"
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
+<div 
+        className="min-h-screen bg-gray-50 pb-20"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
       <div className="bg-blue-500 text-white p-6 rounded-b-3xl">
         <h1 className="text-2xl font-bold">Expense Manager</h1>
         <p className="text-blue-100 text-sm mt-1">{formatDate(selectedDate)}</p>
@@ -118,16 +127,18 @@ export default function ExpenseDashboard() {
 
         <div>
           <h2 className="text-lg font-semibold mb-3">
-            {selectedDate === new Date().toISOString().split('T')[0] ? "Today's Expenses" : 'Expenses'}
+            {(() => {
+              const today = new Date();
+              const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+              return selectedDate === todayStr ? "Today's Expenses" : 'Expenses';
+            })()}
           </h2>
           <div className="space-y-2">
             {dayExpenses.map((expense) => (
               <div 
                 key={expense.id} 
-                className="bg-white rounded-xl p-4 shadow-sm flex items-center justify-between"
-                onTouchStart={(e) => handleExpenseTouchStart(e, expense)}
-                onTouchEnd={handleExpenseTouchEnd}
-                onMouseDown={(e) => { if (e.button === 0) handleExpenseTouchStart(e as any, expense); }}
+                className="bg-white rounded-xl p-4 shadow-sm flex items-center justify-between cursor-pointer active:bg-gray-100 transition-colors"
+                onClick={() => handleExpenseClick(expense)}
               >
                 <div>
                   <p className="font-medium text-gray-800">{expense.title}</p>
@@ -146,8 +157,8 @@ export default function ExpenseDashboard() {
       </div>
 
       <button
-        onClick={() => setShowFabMenu(true)}
-        className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-blue-500 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-600 transition-colors z-10"
+        onClick={() => { setSelectedExpense(null); setShowFabMenu(true); }}
+        className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-blue-500 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-600 transition-all duration-200 active:scale-95 z-10"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -155,8 +166,15 @@ export default function ExpenseDashboard() {
       </button>
 
       {showFabMenu && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-          <div className="bg-white w-full rounded-t-3xl p-6 pb-8" style={{ animation: 'slideUp 0.3s ease-out' }}>
+        <div 
+          className="fixed inset-0 bg-black/50 z-50 flex items-end"
+          onClick={() => { setShowFabMenu(false); setSelectedExpense(null); }}
+        >
+          <div 
+            className="bg-white w-full rounded-t-3xl p-6 pb-8 animate-slide-up" 
+            style={{ animationFillMode: 'forwards' }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold">Add Expense</h2>
               <button onClick={() => setShowFabMenu(false)} className="text-gray-400">
@@ -167,16 +185,24 @@ export default function ExpenseDashboard() {
             </div>
             <ExpenseForm 
               categories={categories} 
-              onSuccess={() => { fetchData(); setShowFabMenu(false); }}
+              onSuccess={() => { fetchData(); setShowFabMenu(false); setSelectedExpense(null); }}
               defaultDate={selectedDate}
+              editExpense={selectedExpense}
             />
           </div>
         </div>
       )}
 
       {showExpenseMenu && selectedExpense && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-          <div className="bg-white w-full rounded-t-3xl p-6 pb-8" style={{ animation: 'slideUp 0.3s ease-out' }}>
+        <div 
+          className="fixed inset-0 bg-black/50 z-50 flex items-end"
+          onClick={() => { setShowExpenseMenu(false); setSelectedExpense(null); }}
+        >
+          <div 
+            className="bg-white w-full rounded-t-3xl p-6 pb-8 animate-slide-up" 
+            style={{ animationFillMode: 'forwards' }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold">Expense Options</h2>
               <button onClick={() => { setShowExpenseMenu(false); setSelectedExpense(null); }} className="text-gray-400">

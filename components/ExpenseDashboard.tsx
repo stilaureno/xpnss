@@ -9,6 +9,7 @@ export default function ExpenseDashboard() {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [showFabMenu, setShowFabMenu] = useState(false);
   const touchStartX = useRef(0);
   const supabase = createClient();
 
@@ -88,14 +89,7 @@ export default function ExpenseDashboard() {
           </div>
         </div>
 
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-3">Add Expense</h2>
-          <ExpenseForm 
-            categories={categories} 
-            onSuccess={fetchData}
-            defaultDate={selectedDate}
-          />
-        </div>
+        
 
         <div>
           <h2 className="text-lg font-semibold mb-3">
@@ -125,15 +119,41 @@ export default function ExpenseDashboard() {
         <p className="text-gray-400 text-xs text-center mt-6">← Swipe left/right to change date →</p>
       </div>
 
+      <button
+        onClick={() => setShowFabMenu(true)}
+        className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-blue-500 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-600 transition-colors z-10"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
+
+      {showFabMenu && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+          <div className="bg-white w-full rounded-t-3xl p-6 pb-8" style={{ animation: 'slideUp 0.3s ease-out' }}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold">Add Expense</h2>
+              <button onClick={() => setShowFabMenu(false)} className="text-gray-400">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <ExpenseForm 
+              categories={categories} 
+              onSuccess={() => { fetchData(); setShowFabMenu(false); }}
+              defaultDate={selectedDate}
+            />
+          </div>
+        </div>
+      )}
+
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 flex justify-around">
         <button className="flex flex-col items-center text-blue-500">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
           <span className="text-xs mt-1">Home</span>
         </button>
-        <button className="flex flex-col items-center text-gray-400">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-          <span className="text-xs mt-1">Add</span>
-        </button>
+        <div className="w-14" />
         <button className="flex flex-col items-center text-gray-400">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
           <span className="text-xs mt-1">Stats</span>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import ExpenseForm from './ExpenseForm';
 
@@ -8,11 +8,13 @@ export default function ExpenseDashboard() {
   const [expenses, setExpenses] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const touchStartX = useRef(0);
   const supabase = createClient();
 
   const fetchData = async () => {
     const [expRes, catRes] = await Promise.all([
-      supabase.from('expenses').select('*, categories(*)').order('date', { ascending: false }).limit(20),
+      supabase.from('expenses').select('*, categories(*)').order('date', { ascending: false }),
       supabase.from('categories').select('*'),
     ]);
     setExpenses(expRes.data || []);
@@ -22,44 +24,85 @@ export default function ExpenseDashboard() {
 
   useEffect(() => { fetchData(); }, []);
 
-  const totalExpenses = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      const [y, m, d] = selectedDate.split('-').map(Number);
+      const current = new Date(y, m - 1, d);
+      if (diff > 0) {
+        current.setDate(current.getDate() + 1);
+      } else {
+        current.setDate(current.getDate() - 1);
+      }
+      const year = current.getFullYear();
+        const month = String(current.getMonth() + 1).padStart(2, '0');
+        const day = String(current.getDate()).padStart(2, '0');
+        setSelectedDate(`${year}-${month}-${day}`);
+    }
+  };
+
+  const dayExpenses = expenses.filter(e => e.date?.startsWith(selectedDate));
+  const dayTotal = dayExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
   const thisMonth = new Date().toISOString().slice(0, 7);
   const monthlyTotal = expenses
     .filter(e => e.date?.startsWith(thisMonth))
     .reduce((sum, e) => sum + Number(e.amount), 0);
 
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    if (dateStr === today) return 'Today';
+    if (dateStr === yesterday) return 'Yesterday';
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  };
+
   if (loading) return <div className="p-8 text-center text-gray-500">Loading...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div 
+      className="min-h-screen bg-gray-50 pb-20"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <div className="bg-blue-500 text-white p-6 rounded-b-3xl">
         <h1 className="text-2xl font-bold">Expense Manager</h1>
-        <p className="text-blue-100 text-sm mt-1">Track your spending</p>
+        <p className="text-blue-100 text-sm mt-1">{formatDate(selectedDate)}</p>
       </div>
 
       <div className="px-4 -mt-4">
         <div className="bg-white rounded-2xl shadow-sm p-4 mb-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-gray-500 text-xs">Total</p>
-              <p className="text-2xl font-bold text-gray-800">${totalExpenses.toFixed(2)}</p>
+              <p className="text-gray-500 text-xs">This Day</p>
+              <p className="text-2xl font-bold text-gray-800">₱{dayTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </div>
             <div>
               <p className="text-gray-500 text-xs">This Month</p>
-              <p className="text-2xl font-bold text-blue-500">${monthlyTotal.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-blue-500">₱{monthlyTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </div>
           </div>
         </div>
 
         <div className="mb-6">
           <h2 className="text-lg font-semibold mb-3">Add Expense</h2>
-          <ExpenseForm categories={categories} onSuccess={fetchData} />
+          <ExpenseForm 
+            categories={categories} 
+            onSuccess={fetchData}
+            defaultDate={selectedDate}
+          />
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold mb-3">Recent Expenses</h2>
+          <h2 className="text-lg font-semibold mb-3">
+            {selectedDate === new Date().toISOString().split('T')[0] ? "Today's Expenses" : 'Expenses'}
+          </h2>
           <div className="space-y-2">
-            {expenses.map((expense) => (
+            {dayExpenses.map((expense) => (
               <div key={expense.id} className="bg-white rounded-xl p-4 shadow-sm flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-medium" style={{ backgroundColor: expense.categories?.color || '#3b82f6' }}>
@@ -67,15 +110,19 @@ export default function ExpenseDashboard() {
                   </div>
                   <div>
                     <p className="font-medium text-gray-800">{expense.title}</p>
-                    <p className="text-gray-400 text-xs">{expense.categories?.name} • {expense.date?.split('T')[0]}</p>
+                    <p className="text-gray-400 text-xs">{expense.categories?.name}</p>
                   </div>
                 </div>
-                <p className="font-semibold text-gray-800">${Number(expense.amount).toFixed(2)}</p>
+                <p className="font-semibold text-gray-800">₱{Number(expense.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
               </div>
             ))}
-            {expenses.length === 0 && <p className="text-gray-400 text-center py-8">No expenses yet</p>}
+            {dayExpenses.length === 0 && (
+              <p className="text-gray-400 text-center py-8">No expenses for this day</p>
+            )}
           </div>
         </div>
+
+        <p className="text-gray-400 text-xs text-center mt-6">← Swipe left/right to change date →</p>
       </div>
 
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 flex justify-around">

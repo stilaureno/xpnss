@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 
-export default function ExpenseForm({ categories, onSuccess }: { categories: any[], onSuccess: () => void }) {
+export default function ExpenseForm({ categories, onSuccess, defaultDate }: { categories: any[], onSuccess: () => void, defaultDate?: string }) {
   const [title, setTitle] = useState('');
   const [amount, setAmount] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(defaultDate || new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {

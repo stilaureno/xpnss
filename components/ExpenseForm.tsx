@@ -12,20 +12,35 @@ export default function ExpenseForm({ categories, onSuccess, defaultDate }: { ca
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !amount || !categoryId) return;
+    if (!title || !amount) return;
     
     setLoading(true);
     const supabase = createClient();
     
-    const { error } = await supabase.from('expenses').insert({
-      title,
+    const insertData: any = {
+      id: crypto.randomUUID(),
+      title: title.trim(),
       amount: parseFloat(amount),
-      category_id: categoryId,
-      date: new Date(date).toISOString(),
+      date: new Date().toISOString(),
       state: 'active',
-    });
+      created_by: '13efc018-1040-4382-8729-1109b30da23b',
+    };
+    if (categoryId) {
+      insertData.category_id = categoryId;
+    }
+    
+    console.log('Inserting:', insertData);
+    
+    const { error, data } = await supabase.from('expenses').insert(insertData).select();
+    
+    console.log('Result:', { error, data });
     
     setLoading(false);
+    if (error) {
+      console.error('Insert error details:', JSON.stringify(error));
+      alert('Error: ' + (error.message || JSON.stringify(error)));
+      return;
+    }
     if (!error) {
       setTitle('');
       setAmount('');
@@ -57,7 +72,6 @@ export default function ExpenseForm({ categories, onSuccess, defaultDate }: { ca
         value={categoryId}
         onChange={(e) => setCategoryId(e.target.value)}
         className="w-full p-3 border border-gray-200 rounded-lg text-sm"
-        required
       >
         <option value="">Select category</option>
         {categories.map((cat) => (

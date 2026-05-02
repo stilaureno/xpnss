@@ -15,6 +15,9 @@ export default function ExpenseDashboard() {
   const [showFabMenu, setShowFabMenu] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<any>(null);
   const [showExpenseMenu, setShowExpenseMenu] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const touchStartX = useRef(0);
   const supabase = createClient();
 
@@ -83,6 +86,84 @@ export default function ExpenseDashboard() {
       return expenseMonth === thisMonth;
     })
     .reduce((sum, e) => sum + Number(e.amount), 0);
+
+  const getWeeklyData = () => {
+    const days = [];
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const dayTotal = expenses
+        .filter(e => {
+          if (!e.date) return false;
+          const ed = new Date(e.date);
+          const edStr = `${ed.getFullYear()}-${String(ed.getMonth() + 1).padStart(2, '0')}-${String(ed.getDate()).padStart(2, '0')}`;
+          return edStr === dateStr;
+        })
+        .reduce((sum, e) => sum + Number(e.amount), 0);
+      days.push({ date: dateStr, day: d.toLocaleDateString('en-US', { weekday: 'short' }), amount: dayTotal });
+    }
+    return days;
+  };
+
+  const getMonthlyData = () => {
+    const months = [];
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(currentYear, i, 1);
+      const monthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const monthTotal = expenses
+        .filter(e => {
+          if (!e.date) return false;
+          const ed = new Date(e.date);
+          const edMonth = `${ed.getFullYear()}-${String(ed.getMonth() + 1).padStart(2, '0')}`;
+          return edMonth === monthStr;
+        })
+        .reduce((sum, e) => sum + Number(e.amount), 0);
+      months.push({ month: monthStr, label: d.toLocaleDateString('en-US', { month: 'short' }), amount: monthTotal });
+    }
+    return months;
+  };
+
+  const weeklyData = getWeeklyData();
+  const monthlyData = getMonthlyData();
+  const maxWeeklyAmount = Math.max(...weeklyData.map(d => d.amount), 1);
+  const maxMonthlyAmount = Math.max(...monthlyData.map(d => d.amount), 1);
+
+  const getDailyData = (monthStr: string) => {
+    const [year, month] = monthStr.split('-').map(Number);
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const days = [];
+    for (let i = 1; i <= daysInMonth; i++) {
+      const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+      const dayTotal = expenses
+        .filter(e => {
+          if (!e.date) return false;
+          const ed = new Date(e.date);
+          const edStr = `${ed.getFullYear()}-${String(ed.getMonth() + 1).padStart(2, '0')}-${String(ed.getDate()).padStart(2, '0')}`;
+          return edStr === dateStr;
+        })
+        .reduce((sum, e) => sum + Number(e.amount), 0);
+      days.push({ date: dateStr, day: i, amount: dayTotal });
+    }
+    return days;
+  };
+
+  const dailyData = selectedMonth ? getDailyData(selectedMonth) : [];
+  const maxDailyAmount = Math.max(...dailyData.map(d => d.amount), 1);
+
+  const getDayExpenses = (dateStr: string) => {
+    return expenses.filter(e => {
+      if (!e.date) return false;
+      const ed = new Date(e.date);
+      const edStr = `${ed.getFullYear()}-${String(ed.getMonth() + 1).padStart(2, '0')}-${String(ed.getDate()).padStart(2, '0')}`;
+      return edStr === dateStr;
+    });
+  };
+
+  const selectedDayExpenses = selectedDay ? getDayExpenses(selectedDay) : [];
 
   const formatDate = (dateStr: string) => {
     const now = new Date();
@@ -235,13 +316,133 @@ export default function ExpenseDashboard() {
         </div>
       )}
 
+      {showStats && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-50 flex items-end"
+          onClick={() => setShowStats(false)}
+        >
+          <div 
+            className="bg-white w-full rounded-t-3xl p-6 pb-20 animate-slide-up" 
+            style={{ animationFillMode: 'forwards' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold">Statistics</h2>
+              <button onClick={() => setShowStats(false)} className="text-gray-400">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="bg-blue-500 rounded-2xl p-4 mb-6">
+              <p className="text-blue-100 text-sm">This Month</p>
+              <p className="text-white text-3xl font-bold mt-1">₱{monthlyTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+              <p className="text-blue-200 text-xs mt-2">
+                {monthlyData.length >= 2 && monthlyData[monthlyData.length - 2].amount > 0 
+                  ? ((monthlyTotal - monthlyData[monthlyData.length - 2].amount) / monthlyData[monthlyData.length - 2].amount * 100 > 0 ? '+' : '') + 
+                    ((monthlyTotal - monthlyData[monthlyData.length - 2].amount) / monthlyData[monthlyData.length - 2].amount * 100).toFixed(1) + '% vs last month'
+                  : 'No previous month data'}
+              </p>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-sm font-medium text-gray-500 mb-3">Last 7 Days</h3>
+              <div className="flex items-end justify-between gap-2 h-32">
+                {weeklyData.map((d, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center">
+                    <div className="w-full bg-blue-500 rounded-t-md transition-all duration-300" style={{ height: `${(d.amount / maxWeeklyAmount) * 100}%`, minHeight: d.amount > 0 ? '4px' : '0' }} />
+                    <span className="text-xs text-gray-400 mt-2">{d.day}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-right text-sm text-gray-500 mt-2">Total: ₱{weeklyData.reduce((s, d) => s + d.amount, 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+            </div>
+
+            <div>
+              {selectedMonth ? (
+                <>
+                  <div className="flex items-center gap-2 mb-3">
+                    <button onClick={() => selectedDay ? setSelectedDay(null) : setSelectedMonth(null)} className="text-blue-500">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <h3 className="text-sm font-medium text-gray-500">
+                      {selectedDay 
+                        ? new Date(selectedDay + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+                        : new Date(selectedMonth + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                      }
+                    </h3>
+                  </div>
+                  
+                  {selectedDay ? (
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {selectedDayExpenses.map((expense, i) => (
+                        <div key={i} className="flex justify-between items-center py-2 border-b border-gray-100">
+                          <span className="text-sm text-gray-600">{expense.title}</span>
+                          <span className="text-sm font-semibold text-gray-800">₱{Number(expense.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                      ))}
+                      {selectedDayExpenses.length === 0 && (
+                        <p className="text-gray-400 text-center py-4">No expenses this day</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {dailyData.filter(d => d.amount > 0).map((d, i) => (
+                        <button 
+                          key={i} 
+                          onClick={() => setSelectedDay(d.date)}
+                          className="w-full flex justify-between items-center py-2 border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                        >
+                          <span className="text-sm text-gray-600">{new Date(d.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })}</span>
+                          <span className="text-sm font-semibold text-gray-800">₱{d.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                        </button>
+                      ))}
+                      {dailyData.filter(d => d.amount > 0).length === 0 && (
+                        <p className="text-gray-400 text-center py-4">No expenses this month</p>
+                      )}
+                    </div>
+                  )}
+                  
+                  <p className="text-right text-sm text-gray-500 mt-4">
+                    {selectedDay 
+                      ? `Day Total: ₱${selectedDayExpenses.reduce((s, e) => s + Number(e.amount), 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+                      : `Month Total: ₱${dailyData.reduce((s, d) => s + d.amount, 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+                    }
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-sm font-medium text-gray-500 mb-3">{new Date().getFullYear()} Monthly Overview</h3>
+                  <div className="grid grid-cols-4 gap-3">
+                    {monthlyData.map((d, i) => (
+                      <button 
+                        key={i} 
+                        onClick={() => setSelectedMonth(d.month)}
+                        className="bg-gray-50 rounded-lg p-3 text-left hover:bg-gray-100 transition-colors"
+                      >
+                        <p className="text-xs text-gray-400">{d.label}</p>
+                        <p className="text-sm font-semibold text-gray-800 mt-1">₱{d.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-right text-sm text-gray-500 mt-4">Year Total: ₱{monthlyData.reduce((s, d) => s + d.amount, 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 flex justify-around">
         <button className="flex flex-col items-center text-blue-500">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
           <span className="text-xs mt-1">Home</span>
         </button>
         <div className="w-14" />
-        <button className="flex flex-col items-center text-gray-400">
+        <button onClick={() => setShowStats(true)} className="flex flex-col items-center text-gray-400">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
           <span className="text-xs mt-1">Stats</span>
         </button>

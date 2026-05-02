@@ -1,8 +1,11 @@
 // @ts-nocheck
-import { createFileRoute } from '@tanstack/react-router';
+import { createRoute } from '@tanstack/react-router';
+import { rootRoute } from '../routeTree.gen.tsx';
 import ExpenseDashboard from '@/components/ExpenseDashboard';
 
-export const Route = createFileRoute('/')({
+export const indexRoute = createRoute({
+  path: '/',
+  getParentRoute: () => rootRoute,
   component: Dashboard,
 });
 

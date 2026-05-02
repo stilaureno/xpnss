@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { createRouter } from '@tanstack/react-router';
 import { rootRoute } from './routeTree.gen.tsx';
-import { Route as indexRoute } from './routes/index';
+import { indexRoute } from './routes/index';
 
 const routeTree = rootRoute.addChildren([indexRoute]);
 

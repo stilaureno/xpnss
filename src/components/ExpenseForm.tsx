@@ -102,7 +102,7 @@ export default function ExpenseForm({ categories, onSuccess, defaultDate, editEx
       <select
         value={categoryId}
         onChange={(e) => setCategoryId(e.target.value)}
-        className="w-full p-3 border border-gray-200 rounded-lg text-sm"
+        className="w-full p-3 border border-gray-200 rounded-lg text-sm hidden"
       >
         <option value="">Select category</option>
         {categories.map((cat) => (

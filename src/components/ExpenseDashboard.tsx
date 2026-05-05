@@ -86,7 +86,7 @@ export default function ExpenseDashboard() {
     const d = new Date(e.date);
     const expenseDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     return expenseDate === selectedDate;
-  }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }).sort((a, b) => Number(b.amount) - Number(a.amount));
   const dayTotal = dayExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
   const thisMonth = (() => {
     const now = new Date();
@@ -172,7 +172,7 @@ export default function ExpenseDashboard() {
       const ed = new Date(e.date);
       const edStr = `${ed.getFullYear()}-${String(ed.getMonth() + 1).padStart(2, '0')}-${String(ed.getDate()).padStart(2, '0')}`;
       return edStr === dateStr;
-    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }).sort((a, b) => Number(b.amount) - Number(a.amount));
   };
 
   const selectedDayExpenses = selectedDay ? getDayExpenses(selectedDay) : [];

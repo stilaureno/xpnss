@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { createClient } from '@/utils/supabase/client';
 
-export default function ExpenseForm({ categories, onSuccess, defaultDate, editExpense }: { categories: any[], onSuccess: () => void, defaultDate?: string, editExpense?: any }) {
+export default function ExpenseForm({ categories, onSuccess, defaultDate, editExpense }: { categories: any[], onSuccess: (action: 'add' | 'update') => void, defaultDate?: string, editExpense?: any }) {
   const [title, setTitle] = useState(editExpense?.title || '');
   const [amount, setAmount] = useState(editExpense?.amount?.toString() || '');
   const [categoryId, setCategoryId] = useState(editExpense?.category_id || '');
@@ -32,7 +32,7 @@ export default function ExpenseForm({ categories, onSuccess, defaultDate, editEx
         alert('Error: ' + error.message);
         return;
       }
-      onSuccess();
+      onSuccess('update');
     } else {
       const insertData: any = {
         id: crypto.randomUUID(),
@@ -56,7 +56,7 @@ export default function ExpenseForm({ categories, onSuccess, defaultDate, editEx
       setTitle('');
       setAmount('');
       setCategoryId('');
-      onSuccess();
+      onSuccess('add');
     }
   };
 

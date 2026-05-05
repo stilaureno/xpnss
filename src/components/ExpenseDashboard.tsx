@@ -33,7 +33,9 @@ export default function ExpenseDashboard() {
   const [showStats, setShowStats] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ action: 'add' | 'update' | 'delete'; message: string } | null>(null);
   const touchStartX = useRef(0);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchData = async () => {
     const [expRes, catRes] = await Promise.all([
@@ -46,6 +48,17 @@ export default function ExpenseDashboard() {
   };
 
   useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    };
+  }, []);
+
+  const showToast = (action: 'add' | 'update' | 'delete', message: string) => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setToast({ action, message });
+    toastTimeoutRef.current = setTimeout(() => setToast(null), 2600);
+  };
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
@@ -79,6 +92,7 @@ export default function ExpenseDashboard() {
     setShowExpenseMenu(false);
     setSelectedExpense(null);
     fetchData();
+    showToast('delete', 'Expense deleted');
   };
 
   const dayExpenses = expenses.filter(e => {
@@ -278,7 +292,12 @@ export default function ExpenseDashboard() {
             </div>
             <ExpenseForm 
               categories={categories} 
-              onSuccess={() => { fetchData(); setShowFabMenu(false); setSelectedExpense(null); }}
+              onSuccess={(action) => {
+                fetchData();
+                setShowFabMenu(false);
+                setSelectedExpense(null);
+                showToast(action, action === 'add' ? 'Expense added' : 'Expense updated');
+              }}
               defaultDate={selectedDate}
               editExpense={selectedExpense}
             />
@@ -459,6 +478,33 @@ export default function ExpenseDashboard() {
                 </>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className="fixed left-4 right-4 bottom-24 z-[70]">
+          <div
+            className={`rounded-xl px-4 py-3 shadow-lg border flex items-center gap-3 text-sm font-medium ${
+              toast.action === 'add'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : toast.action === 'update'
+                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                : 'bg-red-50 text-red-700 border-red-200'
+            }`}
+          >
+            <div
+              className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                toast.action === 'add'
+                  ? 'bg-emerald-100'
+                  : toast.action === 'update'
+                  ? 'bg-blue-100'
+                  : 'bg-red-100'
+              }`}
+            >
+              {toast.action === 'delete' ? '🗑' : '✓'}
+            </div>
+            <span>{toast.message}</span>
           </div>
         </div>
       )}

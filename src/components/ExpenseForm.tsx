@@ -19,7 +19,7 @@ interface Expense {
 
 interface ExpenseFormProps {
   categories: Category[];
-  onSuccess: () => void;
+  onSuccess: (action: 'add' | 'update') => void;
   defaultDate?: string;
   editExpense?: Expense | null;
 }
@@ -52,7 +52,7 @@ export default function ExpenseForm({ categories, onSuccess, defaultDate, editEx
         alert('Error: ' + error.message);
         return;
       }
-      onSuccess();
+      onSuccess('update');
     } else {
       const insertData: Record<string, unknown> = {
         id: crypto.randomUUID(),
@@ -76,7 +76,7 @@ export default function ExpenseForm({ categories, onSuccess, defaultDate, editEx
       setTitle('');
       setAmount('');
       setCategoryId('');
-      onSuccess();
+      onSuccess('add');
     }
   };
 

@@ -364,15 +364,20 @@ export default function ExpenseDashboard() {
                 {weeklyData.map((d, i) => {
                   const heightPercent = maxWeeklyAmount > 0 ? (d.amount / maxWeeklyAmount) * 100 : 0;
                   return (
-                    <div key={i} className="flex-1 flex flex-col items-center">
-                      <div 
-                        className="w-full bg-blue-500 rounded-t-md transition-all duration-300" 
-                        style={{ 
-                          height: `${heightPercent}%`, 
-                          minHeight: d.amount > 0 ? '4px' : '0px',
-                          maxHeight: '100%'
-                        }} 
-                      />
+                    <div key={i} className="flex-1 h-full flex flex-col items-center">
+                      <span className="text-[10px] text-gray-500 leading-none mb-1">
+                        ₱{d.amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                      </span>
+                      <div className="w-full flex-1 flex items-end">
+                        <div 
+                          className="w-full bg-blue-500 rounded-t-md transition-all duration-300" 
+                          style={{ 
+                            height: `${heightPercent}%`, 
+                            minHeight: d.amount > 0 ? '4px' : '0px',
+                            maxHeight: '100%'
+                          }} 
+                        />
+                      </div>
                       <span className="text-xs text-gray-400 mt-2">{d.day}</span>
                     </div>
                   );

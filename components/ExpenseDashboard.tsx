@@ -350,8 +350,13 @@ export default function ExpenseDashboard() {
               <h3 className="text-sm font-medium text-gray-500 mb-3">Last 7 Days</h3>
               <div className="flex items-end justify-between gap-2 h-32">
                 {weeklyData.map((d, i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center">
-                    <div className="w-full bg-blue-500 rounded-t-md transition-all duration-300" style={{ height: `${(d.amount / maxWeeklyAmount) * 100}%`, minHeight: d.amount > 0 ? '4px' : '0' }} />
+                  <div key={i} className="flex-1 h-full flex flex-col items-center">
+                    <span className="text-[10px] text-gray-500 leading-none mb-1">
+                      ₱{d.amount.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                    </span>
+                    <div className="w-full flex-1 flex items-end">
+                      <div className="w-full bg-blue-500 rounded-t-md transition-all duration-300" style={{ height: `${(d.amount / maxWeeklyAmount) * 100}%`, minHeight: d.amount > 0 ? '4px' : '0' }} />
+                    </div>
                     <span className="text-xs text-gray-400 mt-2">{d.day}</span>
                   </div>
                 ))}

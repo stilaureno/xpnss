@@ -83,9 +83,9 @@ export default function ExpenseDashboard() {
 
   const dayExpenses = expenses.filter(e => {
     if (!e.date) return false;
-    const d = new Date(e.date);
-    const expenseDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    return expenseDate === selectedDate;
+    // Parse date string more reliably
+    const datePart = e.date.split('T')[0];
+    return datePart === selectedDate;
   }).sort((a, b) => Number(b.amount) - Number(a.amount));
   const dayTotal = dayExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
   const thisMonth = (() => {
@@ -95,8 +95,9 @@ export default function ExpenseDashboard() {
   const monthlyTotal = expenses
     .filter(e => {
       if (!e.date) return false;
-      const d = new Date(e.date);
-      const expenseMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      // Parse date string more reliably
+      const datePart = e.date.split('T')[0];
+      const expenseMonth = datePart.substring(0, 7);
       return expenseMonth === thisMonth;
     })
     .reduce((sum, e) => sum + Number(e.amount), 0);
@@ -111,9 +112,9 @@ export default function ExpenseDashboard() {
       const dayTotal = expenses
         .filter(e => {
           if (!e.date) return false;
-          const ed = new Date(e.date);
-          const edStr = `${ed.getFullYear()}-${String(ed.getMonth() + 1).padStart(2, '0')}-${String(ed.getDate()).padStart(2, '0')}`;
-          return edStr === dateStr;
+          // Parse date string more reliably - handle both "2026-05-05" and "2026-05-05T14:30:00" formats
+          const datePart = e.date.split('T')[0]; // Get just the date part
+          return datePart === dateStr;
         })
         .reduce((sum, e) => sum + Number(e.amount), 0);
       days.push({ date: dateStr, day: d.toLocaleDateString('en-US', { weekday: 'short' }), amount: dayTotal });
@@ -131,8 +132,9 @@ export default function ExpenseDashboard() {
       const monthTotal = expenses
         .filter(e => {
           if (!e.date) return false;
-          const ed = new Date(e.date);
-          const edMonth = `${ed.getFullYear()}-${String(ed.getMonth() + 1).padStart(2, '0')}`;
+          // Parse date string more reliably - handle both "2026-05-05" and "2026-05-05T14:30:00" formats
+          const datePart = e.date.split('T')[0]; // Get just the date part
+          const edMonth = datePart.substring(0, 7); // Get YYYY-MM
           return edMonth === monthStr;
         })
         .reduce((sum, e) => sum + Number(e.amount), 0);
@@ -154,9 +156,9 @@ export default function ExpenseDashboard() {
       const dayTotal = expenses
         .filter(e => {
           if (!e.date) return false;
-          const ed = new Date(e.date);
-          const edStr = `${ed.getFullYear()}-${String(ed.getMonth() + 1).padStart(2, '0')}-${String(ed.getDate()).padStart(2, '0')}`;
-          return edStr === dateStr;
+          // Parse date string more reliably
+          const datePart = e.date.split('T')[0];
+          return datePart === dateStr;
         })
         .reduce((sum, e) => sum + Number(e.amount), 0);
       days.push({ date: dateStr, day: i, amount: dayTotal });

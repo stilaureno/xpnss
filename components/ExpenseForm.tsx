@@ -61,13 +61,13 @@ export default function ExpenseForm({ categories, onSuccess, defaultDate, editEx
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-4 bg-white rounded-xl shadow-sm border border-gray-100 space-y-4 dark:bg-slate-900 dark:border-slate-800">
+    <form onSubmit={handleSubmit} className="p-4 bg-white rounded-xl shadow-sm border border-gray-100 space-y-4 dark:bg-black dark:border-zinc-900">
       <input
         type="text"
         placeholder="Expense title"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="w-full p-3 border border-gray-200 rounded-lg text-sm dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100"
+        className="w-full p-3 border border-gray-200 rounded-lg text-sm dark:bg-black dark:border-zinc-800 dark:text-slate-100"
         required
       />
       <input
@@ -75,14 +75,14 @@ export default function ExpenseForm({ categories, onSuccess, defaultDate, editEx
         placeholder="Amount"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
-        className="w-full p-3 border border-gray-200 rounded-lg text-sm dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100"
+        className="w-full p-3 border border-gray-200 rounded-lg text-sm dark:bg-black dark:border-zinc-800 dark:text-slate-100"
         step="0.01"
         required
       />
       <select
         value={categoryId}
         onChange={(e) => setCategoryId(e.target.value)}
-        className="w-full p-3 border border-gray-200 rounded-lg text-sm dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100"
+        className="w-full p-3 border border-gray-200 rounded-lg text-sm dark:bg-black dark:border-zinc-800 dark:text-slate-100"
       >
         <option value="">Select category</option>
         {categories.map((cat) => (
@@ -93,7 +93,7 @@ export default function ExpenseForm({ categories, onSuccess, defaultDate, editEx
         type="date"
         value={date}
         onChange={(e) => setDate(e.target.value)}
-        className="w-full p-3 border border-gray-200 rounded-lg text-sm dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100"
+        className="w-full p-3 border border-gray-200 rounded-lg text-sm dark:bg-black dark:border-zinc-800 dark:text-slate-100"
       />
       <button
         type="submit"

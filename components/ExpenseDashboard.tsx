@@ -210,7 +210,7 @@ export default function ExpenseDashboard() {
 
   return (
 <div 
-        className="min-h-screen bg-gray-50 pb-20 text-gray-900 dark:bg-slate-950 dark:text-slate-100"
+        className="min-h-screen bg-gray-50 pb-20 text-gray-900 dark:bg-black dark:text-slate-100"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -241,7 +241,7 @@ export default function ExpenseDashboard() {
       </div>
 
       <div className="px-4 -mt-4">
-        <div className="bg-white rounded-2xl shadow-sm p-4 mb-4 dark:bg-slate-900 dark:shadow-slate-900/30">
+        <div className="bg-white rounded-2xl shadow-sm p-4 mb-4 dark:bg-black dark:shadow-black/40">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-gray-500 text-xs dark:text-slate-400">This Day</p>
@@ -268,7 +268,7 @@ export default function ExpenseDashboard() {
             {dayExpenses.map((expense) => (
               <div 
                 key={expense.id} 
-                className="bg-white rounded-xl p-4 shadow-sm flex items-center justify-between cursor-pointer active:bg-gray-100 transition-colors dark:bg-slate-900 dark:active:bg-slate-800"
+                className="bg-white rounded-xl p-4 shadow-sm flex items-center justify-between cursor-pointer active:bg-gray-100 transition-colors dark:bg-black dark:active:bg-zinc-900"
                 onClick={() => handleExpenseClick(expense)}
               >
                 <div>
@@ -302,7 +302,7 @@ export default function ExpenseDashboard() {
           onClick={() => { setShowFabMenu(false); setSelectedExpense(null); }}
         >
           <div 
-            className="bg-white w-full rounded-t-3xl p-6 pb-8 animate-slide-up dark:bg-slate-900" 
+            className="bg-white w-full rounded-t-3xl p-6 pb-8 animate-slide-up dark:bg-black" 
             style={{ animationFillMode: 'forwards' }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -335,7 +335,7 @@ export default function ExpenseDashboard() {
           onClick={() => { setShowExpenseMenu(false); setSelectedExpense(null); }}
         >
           <div 
-            className="bg-white w-full rounded-t-3xl p-6 pb-8 animate-slide-up dark:bg-slate-900" 
+            className="bg-white w-full rounded-t-3xl p-6 pb-8 animate-slide-up dark:bg-black" 
             style={{ animationFillMode: 'forwards' }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -377,7 +377,7 @@ export default function ExpenseDashboard() {
           onClick={() => setShowStats(false)}
         >
           <div 
-            className="bg-white w-full rounded-t-3xl p-6 pb-20 animate-slide-up dark:bg-slate-900" 
+            className="bg-white w-full rounded-t-3xl p-6 pb-20 animate-slide-up dark:bg-black" 
             style={{ animationFillMode: 'forwards' }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -439,7 +439,7 @@ export default function ExpenseDashboard() {
                   {selectedDay ? (
                     <div className="space-y-2 max-h-64 overflow-y-auto">
                       {selectedDayExpenses.map((expense, i) => (
-                        <div key={i} className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-slate-800">
+                        <div key={i} className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-zinc-900">
                           <span className="text-sm text-gray-600 dark:text-slate-300">{expense.title}</span>
                           <span className="text-sm font-semibold text-gray-800 dark:text-slate-100">₱{Number(expense.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                         </div>
@@ -454,7 +454,7 @@ export default function ExpenseDashboard() {
                         <button 
                           key={i} 
                           onClick={() => setSelectedDay(d.date)}
-                          className="w-full flex justify-between items-center py-2 border-b border-gray-100 hover:bg-gray-50 transition-colors dark:border-slate-800 dark:hover:bg-slate-800"
+                          className="w-full flex justify-between items-center py-2 border-b border-gray-100 hover:bg-gray-50 transition-colors dark:border-zinc-900 dark:hover:bg-zinc-900"
                         >
                           <span className="text-sm text-gray-600 dark:text-slate-300">{new Date(d.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })}</span>
                           <span className="text-sm font-semibold text-gray-800 dark:text-slate-100">₱{d.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
@@ -481,7 +481,7 @@ export default function ExpenseDashboard() {
                       <button 
                         key={i} 
                         onClick={() => setSelectedMonth(d.month)}
-                        className="bg-gray-50 rounded-lg p-3 text-left hover:bg-gray-100 transition-colors dark:bg-slate-800 dark:hover:bg-slate-700"
+                        className="bg-gray-50 rounded-lg p-3 text-left hover:bg-gray-100 transition-colors dark:bg-zinc-950 dark:hover:bg-zinc-900"
                       >
                         <p className="text-xs text-gray-400 dark:text-slate-500">{d.label}</p>
                         <p className="text-sm font-semibold text-gray-800 mt-1 dark:text-slate-100">₱{d.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
@@ -523,7 +523,7 @@ export default function ExpenseDashboard() {
         </div>
       )}
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 flex justify-around dark:bg-slate-900 dark:border-slate-800">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-3 flex justify-around dark:bg-black dark:border-zinc-900">
         <button className="flex flex-col items-center text-blue-500">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
           <span className="text-xs mt-1">Home</span>
